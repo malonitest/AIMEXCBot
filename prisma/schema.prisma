@@ -23,10 +23,10 @@ model UserSetting {
   userId                 String        @unique
   botEnabled             Boolean       @default(false)
   leverage               Int           @default(50)
-  riskPerTradePct        Decimal       @default(Decimal("0.015"))
-  stopLossPct            Decimal       @default(Decimal("0.0015"))
-  takeProfitPct          Decimal       @default(Decimal("0.0045"))
-  maxDailyLossPct        Decimal       @default(Decimal("0.05"))
+  riskPerTradePct        Decimal       @default("0.015")
+  stopLossPct            Decimal       @default("0.0015")
+  takeProfitPct          Decimal       @default("0.0045")
+  maxDailyLossPct        Decimal       @default("0.05")
   apiKeyCipher           String
   apiSecretCipher        String
   encryptionVersion      Int           @default(1)
@@ -74,7 +74,7 @@ model DailyLimit {
   id            String      @id @default(cuid())
   userSettingId String
   date          DateTime
-  loss          Decimal     @default(Decimal("0"))
+  loss          Decimal     @default("0")
   userSetting   UserSetting @relation(fields: [userSettingId], references: [id], onDelete: Cascade)
 
   @@unique([userSettingId, date])
