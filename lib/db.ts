@@ -1,4 +1,5 @@
 import { PrismaClient, TradeSide, TradeStatus } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 import { Decimal } from "@prisma/client/runtime/library";
 
 const globalForPrisma = globalThis as unknown as {
@@ -44,7 +45,7 @@ export async function recordTrade(params: {
   stopLoss: number;
   takeProfit: number;
   reason: string;
-  metadata?: Record<string, unknown>;
+  metadata?: Prisma.InputJsonValue;
 }) {
   return prisma.trade.create({
     data: {
@@ -92,7 +93,7 @@ export async function appendStrategyLog(params: {
   userSettingId: string;
   level?: "info" | "warn" | "error";
   message: string;
-  payload?: Record<string, unknown>;
+  payload?: Prisma.InputJsonValue;
 }) {
   return prisma.strategyLog.create({
     data: {

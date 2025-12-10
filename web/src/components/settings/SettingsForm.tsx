@@ -9,7 +9,7 @@ import { jsonFetcher } from "@/lib/fetcher";
 import type { SettingsPayload } from "@/types/api";
 
 const schema = z.object({
-  botEnabled: z.boolean().default(true),
+  botEnabled: z.boolean(),
   leverage: z.number().min(1).max(50),
   riskPerTradePct: z.number().min(0.005).max(0.03),
   stopLossPct: z.number().min(0.001).max(0.005),

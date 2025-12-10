@@ -60,19 +60,21 @@ export class MexcClient {
   }
 
   async fetchTicker(symbol = DEFAULT_SYMBOL) {
-    const { data } = await this.http.get<{ data: { fairPrice: string }[] }>(`/v1/contract/ticker?symbol=${symbol}`);
-    return Number(data?.[0]?.fairPrice ?? 0);
+    const response = await this.http.get<{ data: { fairPrice: string }[] }>(`/v1/contract/ticker?symbol=${symbol}`);
+    const payload = response.data?.data ?? [];
+    return Number(payload[0]?.fairPrice ?? 0);
   }
 
   async fetchOrderBook(symbol = DEFAULT_SYMBOL): Promise<OrderBookSnapshot> {
-    const { data } = await this.http.get<{ data: { bids: [string, string][]; asks: [string, string][] } }>(
+    const response = await this.http.get<{ data: { bids: [string, string][]; asks: [string, string][] } }>(
       `/v1/contract/depth?symbol=${symbol}&limit=40`,
     );
-    const bidNotional = (data?.bids ?? []).reduce<number>(
+    const orderbook = response.data?.data ?? { bids: [], asks: [] };
+    const bidNotional = (orderbook.bids ?? []).reduce<number>(
       (acc: number, [price, qty]: [string, string]) => acc + Number(price) * Number(qty),
       0,
     );
-    const askNotional = (data?.asks ?? []).reduce<number>(
+    const askNotional = (orderbook.asks ?? []).reduce<number>(
       (acc: number, [price, qty]: [string, string]) => acc + Number(price) * Number(qty),
       0,
     );
@@ -80,10 +82,10 @@ export class MexcClient {
   }
 
   async fetchRecentCandles(symbol = DEFAULT_SYMBOL, interval = "Min1", limit = 120): Promise<Candle[]> {
-    const { data } = await this.http.get<{ data: [number, string, string, string, string, string][] }>(
+    const response = await this.http.get<{ data: [number, string, string, string, string, string][] }>(
       `/v1/contract/kline?symbol=${symbol}&interval=${interval}&limit=${limit}`,
     );
-    return (data?.data ?? []).map((row: [number, string, string, string, string, string]) => ({
+    return (response.data?.data ?? []).map((row: [number, string, string, string, string, string]) => ({
       timestamp: row[0],
       open: Number(row[1]),
       high: Number(row[2]),

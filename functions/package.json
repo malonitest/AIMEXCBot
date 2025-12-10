@@ -13,13 +13,13 @@
     "@azure/identity": "^4.4.1",
     "@azure/keyvault-secrets": "^4.7.0",
     "@azure/keyvault-keys": "^4.8.0",
-    "@prisma/client": "^5.19.1",
+    "@prisma/client": "5.19.1",
     "axios": "^1.7.9",
     "pg": "^8.12.0",
     "tslib": "^2.8.1"
   },
   "devDependencies": {
-    "prisma": "^5.19.1",
+    "prisma": "5.19.1",
     "tsup": "^8.3.0",
     "typescript": "^5.6.3"
   }
