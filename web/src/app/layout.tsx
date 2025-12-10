@@ -4,7 +4,7 @@ import "./globals.css";
 import { AppShell } from "@/components/layout/AppShell";
 
 const display = Space_Grotesk({ subsets: ["latin"], variable: "--font-display" });
-const mono = IBM_Plex_Mono({ subsets: ["latin"], variable: "--font-mono" });
+const mono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400"], variable: "--font-mono" });
 
 export const metadata: Metadata = {
   title: "AIMEXCBot | SOL/USDT AI Futures",
