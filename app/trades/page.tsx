@@ -26,9 +26,10 @@ export default function TradesPage() {
         : `/api/trades?status=${filter}&limit=100`;
       const response = await fetch(url);
       const data = await response.json();
-      setTrades(data.trades);
+      setTrades(data.trades || []);
     } catch (error) {
       console.error('Error fetching trades:', error);
+      setTrades([]);
     } finally {
       setLoading(false);
     }
@@ -38,9 +39,10 @@ export default function TradesPage() {
     try {
       const response = await fetch(`/api/trades/logs?tradeId=${tradeId}`);
       const data = await response.json();
-      setLogs(data.logs);
+      setLogs(data.logs || []);
     } catch (error) {
       console.error('Error fetching trade logs:', error);
+      setLogs([]);
     }
   };
 

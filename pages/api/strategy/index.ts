@@ -2,7 +2,9 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { query } from '../../../lib/db';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const userId = 1; // Mock user ID
+  // MVP: Hardcoded user ID for testing
+  // TODO: Implement proper authentication before production
+  const userId = 1;
 
   if (req.method === 'GET') {
     try {

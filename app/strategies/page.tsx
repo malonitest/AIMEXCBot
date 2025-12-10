@@ -23,9 +23,10 @@ export default function StrategiesPage() {
     try {
       const response = await fetch('/api/strategy');
       const data = await response.json();
-      setStrategies(data.strategies);
+      setStrategies(data.strategies || []);
     } catch (error) {
       console.error('Error fetching strategies:', error);
+      setStrategies([]);
     } finally {
       setLoading(false);
     }

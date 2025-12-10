@@ -3,8 +3,9 @@ import { query } from '../../../lib/db';
 import { encrypt, decrypt } from '../../../lib/encryption';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  // Simple authentication - in production, use proper auth (NextAuth.js, etc.)
-  const userId = 1; // Mock user ID
+  // MVP: Hardcoded user ID for testing
+  // TODO: Implement proper authentication (NextAuth.js, JWT, etc.) before production
+  const userId = 1;
 
   if (req.method === 'GET') {
     try {

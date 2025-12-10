@@ -4,7 +4,8 @@ import { decrypt } from '../../../lib/encryption';
 import { TradingEngine } from '../../../lib/strategy/engine';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const userId = 1; // Mock user ID
+  // MVP: Hardcoded user ID for testing
+  const userId = 1;
 
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });

@@ -16,9 +16,10 @@ export default function ActiveTrades() {
     try {
       const response = await fetch('/api/trades?status=OPEN&limit=10');
       const data = await response.json();
-      setTrades(data.trades);
+      setTrades(data.trades || []);
     } catch (error) {
       console.error('Error fetching active trades:', error);
+      setTrades([]);
     } finally {
       setLoading(false);
     }

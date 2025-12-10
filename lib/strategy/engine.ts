@@ -21,11 +21,17 @@ export class TradingEngine {
       const lastPrice = ticker.data?.lastPrice || 0;
       const volume = ticker.data?.volume24 || 0;
 
-      // Mock signal generation - replace with real technical analysis
+      // MVP: Simple signal generation for testing
+      // TODO: Replace with proper technical analysis (RSI, MACD, Moving Averages, etc.)
+      // Constants for signal threshold
+      const BULLISH_THRESHOLD = 0.6;
+      const BEARISH_THRESHOLD = 0.4;
+      const MIN_VOLUME = 1000000;
+      
       const random = Math.random();
-      if (random > 0.6 && volume > 1000000) {
+      if (random > BULLISH_THRESHOLD && volume > MIN_VOLUME) {
         return 'LONG';
-      } else if (random < 0.4 && volume > 1000000) {
+      } else if (random < BEARISH_THRESHOLD && volume > MIN_VOLUME) {
         return 'SHORT';
       }
       return null;
@@ -179,10 +185,14 @@ export class TradingEngine {
         parseFloat(trade.quantity)
       );
 
-      // Calculate PnL
+      // Calculate PnL with validation
       const entryPrice = parseFloat(trade.entry_price);
       const quantity = parseFloat(trade.quantity);
-      const leverage = parseInt(trade.leverage);
+      const leverage = parseInt(trade.leverage, 10);
+
+      if (isNaN(entryPrice) || isNaN(quantity) || isNaN(leverage)) {
+        throw new Error('Invalid trade data for PnL calculation');
+      }
 
       let pnl: number;
       if (trade.side === 'LONG') {

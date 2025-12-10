@@ -20,6 +20,7 @@ export default function Home() {
       setStats(data);
     } catch (error) {
       console.error('Error fetching stats:', error);
+      setStats({ totalTrades: 0, activeTrades: 0, totalPnL: 0, winRate: 0, activeStrategies: 0 });
     } finally {
       setLoading(false);
     }

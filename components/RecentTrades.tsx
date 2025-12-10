@@ -14,9 +14,10 @@ export default function RecentTrades() {
     try {
       const response = await fetch('/api/trades?status=CLOSED&limit=10');
       const data = await response.json();
-      setTrades(data.trades);
+      setTrades(data.trades || []);
     } catch (error) {
       console.error('Error fetching recent trades:', error);
+      setTrades([]);
     } finally {
       setLoading(false);
     }

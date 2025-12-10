@@ -1,10 +1,10 @@
 interface DashboardStatsProps {
   stats: {
-    totalTrades: number;
-    activeTrades: number;
-    totalPnL: number;
-    winRate: number;
-    activeStrategies: number;
+    totalTrades?: number;
+    activeTrades?: number;
+    totalPnL?: number;
+    winRate?: number;
+    activeStrategies?: number;
   } | null;
 }
 
@@ -13,30 +13,33 @@ export default function DashboardStats({ stats }: DashboardStatsProps) {
     return null;
   }
 
+  const totalPnL = stats.totalPnL ?? 0;
+  const winRate = stats.winRate ?? 0;
+
   const statCards = [
     {
       label: 'Total Trades',
-      value: stats.totalTrades,
+      value: stats.totalTrades ?? 0,
       color: 'text-blue-400',
     },
     {
       label: 'Active Trades',
-      value: stats.activeTrades,
+      value: stats.activeTrades ?? 0,
       color: 'text-yellow-400',
     },
     {
       label: 'Total PnL',
-      value: `${stats.totalPnL >= 0 ? '+' : ''}${stats.totalPnL.toFixed(2)} USDT`,
-      color: stats.totalPnL >= 0 ? 'text-green-400' : 'text-red-400',
+      value: `${totalPnL >= 0 ? '+' : ''}${totalPnL.toFixed(2)} USDT`,
+      color: totalPnL >= 0 ? 'text-green-400' : 'text-red-400',
     },
     {
       label: 'Win Rate',
-      value: `${stats.winRate.toFixed(1)}%`,
-      color: stats.winRate >= 50 ? 'text-green-400' : 'text-red-400',
+      value: `${winRate.toFixed(1)}%`,
+      color: winRate >= 50 ? 'text-green-400' : 'text-red-400',
     },
     {
       label: 'Active Strategies',
-      value: stats.activeStrategies,
+      value: stats.activeStrategies ?? 0,
       color: 'text-mexc-primary',
     },
   ];
