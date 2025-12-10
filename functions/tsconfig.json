@@ -1,0 +1,17 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "ES2021",
+    "outDir": "./.tsbuild",
+    "rootDir": "./",
+    "moduleResolution": "node",
+    "types": ["node", "@azure/functions"],
+    "baseUrl": "./",
+    "paths": {
+      "@lib/*": ["../lib/*"]
+    }
+  },
+  "include": ["./**/*.ts", "../lib/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
+}

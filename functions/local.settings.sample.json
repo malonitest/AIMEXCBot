@@ -1,0 +1,12 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "node",
+    "DATABASE_URL": "postgresql://username:password@host:5432/aimexcbot",
+    "KEY_VAULT_URI": "https://your-key-vault.vault.azure.net/",
+    "KV_ENCRYPTION_SECRET_NAME": "aimexcbot-encryption-key",
+    "MEXC_SYMBOL": "SOL_USDT",
+    "DEFAULT_USER_ID": "demo-user"
+  }
+}

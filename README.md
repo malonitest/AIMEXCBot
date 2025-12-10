@@ -1,298 +1,126 @@
-# AI-Driven MEXC Trading Bot
+# AIMEXCBot
 
-A complete fullstack MVP for an AI-driven trading bot for MEXC SOL/USDT futures with 50× leverage, running entirely on Microsoft Azure.
+AI-assisted SOL/USDT (50×) trading bot targeting the MEXC Futures Testnet. The system ships as a mono-repo with a Next.js command center, Prisma/PostgreSQL data layer, reusable trading libraries, and an Azure Functions timer job that fires every ~15 seconds to evaluate signals and place orders.
 
-![License](https://img.shields.io/badge/license-ISC-blue)
-![Next.js](https://img.shields.io/badge/Next.js-16.0-black)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue)
-![Azure](https://img.shields.io/badge/Azure-Cloud-0078D4)
+## Architecture
 
-## 🚀 Features
+- **Web dashboard (`/web`)** – Next.js 14 + Tailwind CSS. Provides live signal visualizations, bot status, settings management (Key Vault–encrypted secrets), and trade telemetry.
+- **Shared libraries (`/lib`)** – Strategy logic, risk engine, MEXC REST client, Prisma helpers, and Key Vault encryption utilities consumed by both the web APIs and Azure Functions.
+- **Database (`/prisma`)** – Prisma schema targeting Azure Database for PostgreSQL Flexible Server. Stores encrypted API key blobs, strategy configs, trade history, and daily loss tracking.
+- **Background execution (`/functions`)** – Azure Functions (Node 18) timer trigger that:
+  1. Loads settings + decrypts credentials via Key Vault
+  2. Pulls SOL/USDT futures data, builds AI-like momentum signal
+  3. Evaluates risk (position sizing, daily loss guard, single-position rule)
+  4. Sends signed futures orders to MEXC and persists trades/logs
+- **CI/CD (`.github/workflows`)** – Separate GitHub Actions deploy pipelines for the Next.js App Service and the Function App.
 
-- **AI-Driven Trading Strategies**: Automated trend-following, mean reversion, and breakout strategies
-- **50x Leverage Support**: Trade SOL/USDT futures with up to 50x leverage on MEXC
-- **Real-Time Dashboard**: Monitor trades, PnL, win rate, and active strategies
-- **Secure API Key Storage**: AES-256 encrypted storage of MEXC API credentials
-- **Position Management**: Automatic stop-loss and take-profit execution
-- **Trade History & Logs**: Complete audit trail of all trading activity
-- **Azure Cloud Native**: Fully deployed on Azure App Service with PostgreSQL
+## Prerequisites
 
-## 🏗️ Architecture
+- Node.js 20+
+- PNPM/NPM (repo uses npm + lockfiles)
+- Azure subscription with:
+  - App Service (Linux) for the web dashboard
+  - Azure Functions (Consumption or Premium) for `runBot`
+  - Azure Database for PostgreSQL Flexible Server
+  - Azure Key Vault (store `aimexcbot-encryption-key` >= 32-byte hex/base64 string and runtime secrets)
+- MEXC Futures API key/secret (testnet recommended)
 
-### Frontend
-- **Framework**: Next.js 16 with App Router
-- **Styling**: Tailwind CSS with custom MEXC theme
-- **Components**: React 19 with TypeScript
-- **Deployment**: Azure App Service
+## Environment setup
 
-### Backend
-- **API**: Next.js API Routes (Node.js)
-- **Trading Engine**: Custom strategy execution engine
-- **MEXC Integration**: Direct API integration with signature authentication
-- **Deployment**: Azure App Service
+1. **Install dependencies**
+```bash
+cd web && npm install && cd ..
+cd functions && npm install && cd ..
+```
+2. **Copy env templates**
+```bash
+cp .env.example .env            # shared values (used by tooling)
+cp functions/local.settings.sample.json functions/local.settings.json
+```
+3. **Set required variables**
+- `DATABASE_URL` (PostgreSQL)
+- `KEY_VAULT_URI`, `KV_ENCRYPTION_SECRET_NAME`
+- `LOCAL_ENCRYPTION_KEY` (optional fallback for local dev)
+- `DEFAULT_USER_ID`, `ACCOUNT_BALANCE`, `MAX_DAILY_LOSS_PCT`
 
-### Database
-- **Platform**: Azure PostgreSQL Flexible Server
-- **Features**: Encrypted API keys, strategies, trades, and logs
-- **Schema**: Fully normalized with indexes for performance
+4. **Generate Prisma client**
+```bash
+cd web && npm run prisma:generate && cd ..
+cd functions && npm run prisma:generate && cd ..
+```
 
-## 📋 Prerequisites
+5. **Apply migrations** (creates DB schema)
+```bash
+npx prisma migrate deploy --schema prisma/schema.prisma
+```
 
-- Node.js 18+ 
-- Azure Account with active subscription
-- MEXC Account with API keys (trading permissions, no withdrawal)
-- Azure CLI (for deployment)
+## Local development
 
-## 🛠️ Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/malonitest/AIMEXCBot.git
-   cd AIMEXCBot
-   ```
-
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-3. **Configure environment variables**
-   ```bash
-   cp .env.example .env
-   ```
-   
-   Edit `.env` with your configuration:
-   - `DATABASE_URL`: PostgreSQL connection string
-   - `ENCRYPTION_KEY`: 32-character encryption key
-   - `MEXC_API_URL`: MEXC API endpoint (default: https://contract.mexc.com)
-
-4. **Setup database**
-   
-   Run the schema on your PostgreSQL database:
-   ```bash
-   psql $DATABASE_URL < lib/db/schema.sql
-   ```
-
-5. **Run development server**
-   ```bash
-   npm run dev
-   ```
-   
-   Open [http://localhost:3000](http://localhost:3000)
-
-## 🌐 Azure Deployment
-
-See detailed deployment guide in [azure-deploy.md](azure-deploy.md)
-
-### Quick Deploy
+### Web dashboard
 
 ```bash
-# Build the application
+cd web
+npm run dev
+# http://localhost:3000
+```
+
+The dashboard polls `/api/status` every 10s, renders live indicators, exposes settings (Key Vault–encrypted secrets), and displays trade logs.
+
+### Azure Function (timer)
+
+```bash
+cd functions
+npm install          # if not already installed
 npm run build
-
-# Deploy to Azure (after configuring Azure CLI)
-az webapp up --name aimexcbot-app --resource-group aimexcbot-rg
+func start --javascript
 ```
 
-## 📊 Usage
+The timer trigger uses `functions/local.settings.json` for env vars. Ensure PostgreSQL + Key Vault are reachable or configure `LOCAL_ENCRYPTION_KEY` for offline testing.
 
-### 1. Configure API Keys
-- Navigate to Settings page
-- Enter your MEXC API Key and Secret Key
-- Keys are encrypted before storage
+## Deployment
 
-### 2. Create Trading Strategy
-- Go to Strategies page
-- Click "New Strategy"
-- Configure:
-  - Strategy name
-  - Leverage (1-125x, default 50x)
-  - Position size in USDT
-  - Stop loss percentage
-  - Take profit percentage
-  - Strategy type (trend following, mean reversion, or breakout)
+Two opinionated workflows are provided:
 
-### 3. Activate Strategy
-- Toggle strategy to "Active"
-- Strategy will execute according to its parameters
+1. **`web-deploy.yml`** – Builds `/web`, runs lint + `next build`, then deploys to the App Service defined by `AZURE_WEBAPP_NAME` via `AZURE_WEBAPP_PUBLISH_PROFILE` secret.
+2. **`function-deploy.yml`** – Builds `/functions` (tsup -> `dist`), prunes dev deps, and deploys to the Function App referenced by `AZURE_FUNCTIONAPP_NAME`/`AZURE_FUNCTIONAPP_PUBLISH_PROFILE`.
 
-### 4. Manual Execution (for testing)
-- Go to Settings page
-- Click "Execute Active Strategies"
-- This simulates the automated execution that would run on a schedule
+Both workflows expect the following repository secrets (set in Settings → Secrets):
 
-### 5. Monitor Performance
-- Dashboard: View overall statistics
-- Trade History: See all open and closed trades
-- Trade Logs: Detailed execution logs for each trade
+- `DATABASE_URL`
+- `KEY_VAULT_URI`
+- `KV_ENCRYPTION_SECRET_NAME`
+- `MEXC_BASE_URL`, `MEXC_SYMBOL`
+- `ACCOUNT_BALANCE`, `MAX_DAILY_LOSS_PCT`, `DEFAULT_USER_ID`
+- `AZURE_WEBAPP_NAME`, `AZURE_WEBAPP_PUBLISH_PROFILE`
+- `AZURE_FUNCTIONAPP_NAME`, `AZURE_FUNCTIONAPP_PUBLISH_PROFILE`
 
-## 🔒 Security
+## Key Vault usage
 
-- **Encrypted Storage**: All API keys are encrypted using AES-256
-- **Environment Variables**: Sensitive data stored in Azure App Settings
-- **HTTPS Only**: All traffic encrypted in transit
-- **No Withdrawal Permissions**: API keys should only have trading permissions
-- **IP Whitelist**: Recommended to whitelist Azure IPs on MEXC
+- A 32-byte symmetric key (hex or base64) must reside in Key Vault under `KV_ENCRYPTION_SECRET_NAME` (defaults to `aimexcbot-encryption-key`).
+- User-supplied MEXC API key/secret are encrypted client-side and stored in the DB, and the raw values are also mirrored into Key Vault secrets (`mexc-api-key-{user}`, `mexc-api-secret-{user}`). The Azure Function pulls/decrypts on every tick.
 
-## 📁 Project Structure
+## Project scripts
 
-```
-AIMEXCBot/
-├── app/                      # Next.js app directory
-│   ├── globals.css          # Global styles
-│   ├── layout.tsx           # Root layout
-│   ├── page.tsx             # Dashboard page
-│   ├── strategies/          # Strategies management
-│   ├── trades/              # Trade history
-│   └── settings/            # Settings page
-├── components/              # React components
-│   ├── Navigation.tsx       # Navigation bar
-│   ├── DashboardStats.tsx   # Stats cards
-│   ├── ActiveTrades.tsx     # Active positions
-│   └── RecentTrades.tsx     # Closed trades
-├── lib/                     # Core libraries
-│   ├── db/                  # Database
-│   │   ├── index.ts        # Connection pool
-│   │   └── schema.sql      # Database schema
-│   ├── mexc/               # MEXC API client
-│   │   └── client.ts       # API integration
-│   ├── strategy/           # Trading engine
-│   │   └── engine.ts       # Strategy execution
-│   └── encryption.ts       # Encryption utilities
-├── pages/api/              # API routes
-│   ├── settings/           # Settings API
-│   ├── strategy/           # Strategy CRUD
-│   └── trades/             # Trade data & logs
-├── types/                  # TypeScript types
-│   └── index.ts           # Type definitions
-├── .azure/                # Azure configuration
-├── azure-deploy.md        # Deployment guide
-├── next.config.js         # Next.js config
-├── tailwind.config.js     # Tailwind config
-└── tsconfig.json          # TypeScript config
-```
+- `web`:
+  - `npm run dev` – Next.js dev server
+  - `npm run build` – Production bundle
+  - `npm run lint` / `npm run typecheck`
+  - `npm run prisma:*` helpers against `../prisma/schema.prisma`
+- `functions`:
+  - `npm run build` – tsup build to `dist`
+  - `npm run prisma:generate`
+  - `npm run start` – build then `func start`
 
-## 🧪 API Endpoints
+## Testing + observability
 
-### Settings
-- `GET /api/settings` - Get API key status
-- `POST /api/settings` - Save/update API keys
+- Strategy + risk outputs can be validated via `/api/status` or the dashboard.
+- `prisma.strategyLog` captures bot decisions (entry, exits, risk blocks, errors) and surfaces within Azure Monitor / App Insights if connected.
+- Daily loss guard rails stored in `DailyLimit` ensure trading halts after 5% drawdown.
 
-### Strategies
-- `GET /api/strategy` - List all strategies
-- `POST /api/strategy` - Create new strategy
-- `PUT /api/strategy/[id]` - Update strategy
-- `DELETE /api/strategy/[id]` - Delete strategy
-- `POST /api/strategy/execute` - Execute active strategies
+## Security checklist
 
-### Trades
-- `GET /api/trades` - List trades (with filters)
-- `GET /api/trades/stats` - Get trading statistics
-- `GET /api/trades/logs` - Get trade logs
+- Always run the web app + function with managed identity for Key Vault access in Azure.
+- Restrict PostgreSQL ingress to Azure services or private networking.
+- Store final App Service / Function App secrets (MEXC credentials, DB URL, Key Vault IDs) as Azure app settings, not inside repo.
 
-## 📈 Trading Strategies
-
-### Trend Following (Implemented)
-- Identifies market momentum
-- Opens positions in the direction of the trend
-- Configurable leverage and position sizing
-
-### Mean Reversion (Planned)
-- Identifies overbought/oversold conditions
-- Trades against short-term price extremes
-
-### Breakout (Planned)
-- Detects support/resistance breakouts
-- Enters positions on confirmed breaks
-
-## ⚙️ Configuration
-
-### Strategy Parameters
-- **Leverage**: 1-125x (50x recommended for SOL/USDT)
-- **Position Size**: USDT amount per trade
-- **Stop Loss**: Percentage loss to trigger exit
-- **Take Profit**: Percentage gain to trigger exit
-
-### Risk Management
-- Isolated margin mode (default)
-- Automatic position sizing
-- Built-in stop loss and take profit
-- Real-time monitoring
-
-## 🔄 Automated Execution
-
-For production use, set up automated strategy execution:
-
-### Option 1: Azure Functions (Recommended)
-Create a Timer Trigger function that calls `/api/strategy/execute` every 5 minutes
-
-### Option 2: Azure Logic Apps
-Configure a recurrence trigger with HTTP action
-
-### Option 3: External Cron Service
-Use services like cron-job.org to trigger the API endpoint
-
-## 📊 Monitoring
-
-- **Application Insights**: Azure native monitoring
-- **Database Logs**: Trade history and execution logs
-- **Real-time Dashboard**: Live performance metrics
-
-## 🐛 Troubleshooting
-
-### Database Connection Issues
-- Verify connection string format
-- Check firewall rules in Azure PostgreSQL
-- Ensure SSL mode is set to 'require'
-
-### API Key Errors
-- Verify API keys are correctly configured on MEXC
-- Check API key permissions (needs futures trading)
-- Ensure IP whitelist includes Azure IPs
-
-### Strategy Not Executing
-- Verify strategy is set to "Active"
-- Check API key configuration
-- Review trade logs for errors
-
-## 🤝 Contributing
-
-This is an MVP project. Contributions are welcome!
-
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
-
-## ⚠️ Disclaimer
-
-**Trading cryptocurrencies and futures involves significant risk. This bot is provided as-is with no guarantees. Use at your own risk. Never invest more than you can afford to lose.**
-
-- Past performance does not guarantee future results
-- High leverage increases both potential gains and losses
-- Always test with small amounts first
-- Monitor your positions regularly
-- Understand the risks of automated trading
-
-## 📄 License
-
-ISC License - see LICENSE file for details
-
-## 🔗 Links
-
-- [MEXC Exchange](https://www.mexc.com/)
-- [MEXC API Documentation](https://mxcdevelop.github.io/apidocs/contract_v1_en/)
-- [Azure Documentation](https://docs.microsoft.com/azure/)
-- [Next.js Documentation](https://nextjs.org/docs)
-
-## 📞 Support
-
-For issues and questions:
-- Open an issue on GitHub
-- Check the Azure deployment guide
-- Review MEXC API documentation
-
----
-
-**Built with ❤️ for the crypto trading community**
+Happy trading! ⚡

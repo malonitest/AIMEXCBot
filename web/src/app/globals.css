@@ -1,0 +1,49 @@
+@import "tailwindcss";
+
+@import "tailwindcss";
+
+:root {
+  --background: #020617;
+  --foreground: #f8fafc;
+  --card: rgba(15, 23, 42, 0.8);
+  --stroke: rgba(255, 255, 255, 0.08);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-stroke: var(--stroke);
+  --font-sans: var(--font-display);
+  --font-mono: var(--font-mono);
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-display), "Space Grotesk", system-ui;
+}
+
+.glass-card {
+  border: 1px solid var(--stroke);
+  background: var(--card);
+  border-radius: 1.25rem;
+  padding: 1.5rem;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.4);
+}
+
+.grid-accent {
+  position: relative;
+}
+
+.grid-accent::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(transparent 95%, rgba(148, 163, 184, 0.08) 100%);
+  background-size: 100% 32px;
+  opacity: 0.4;
+  pointer-events: none;
+}

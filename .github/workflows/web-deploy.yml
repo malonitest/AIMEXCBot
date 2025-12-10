@@ -1,0 +1,58 @@
+name: Deploy Web App
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "web/**"
+      - "lib/**"
+      - "prisma/**"
+      - ".github/workflows/web-deploy.yml"
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npm run prisma:generate
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_DASHBOARD_REFRESH_MS: "10000"
+          KEY_VAULT_URI: ${{ secrets.KEY_VAULT_URI }}
+          KV_ENCRYPTION_SECRET_NAME: ${{ secrets.KV_ENCRYPTION_SECRET_NAME }}
+          MEXC_BASE_URL: ${{ secrets.MEXC_BASE_URL }}
+          MEXC_SYMBOL: ${{ secrets.MEXC_SYMBOL }}
+          ACCOUNT_BALANCE: ${{ secrets.ACCOUNT_BALANCE }}
+          MAX_DAILY_LOSS_PCT: ${{ secrets.MAX_DAILY_LOSS_PCT }}
+          DEFAULT_USER_ID: ${{ secrets.DEFAULT_USER_ID }}
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: ${{ github.workspace }}/web

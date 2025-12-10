@@ -1,0 +1,81 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TradeSide {
+  BUY
+  SELL
+}
+
+enum TradeStatus {
+  OPEN
+  CLOSED
+  CANCELLED
+}
+
+model UserSetting {
+  id                     String        @id @default(cuid())
+  userId                 String        @unique
+  botEnabled             Boolean       @default(false)
+  leverage               Int           @default(50)
+  riskPerTradePct        Decimal       @default(Decimal("0.015"))
+  stopLossPct            Decimal       @default(Decimal("0.0015"))
+  takeProfitPct          Decimal       @default(Decimal("0.0045"))
+  maxDailyLossPct        Decimal       @default(Decimal("0.05"))
+  apiKeyCipher           String
+  apiSecretCipher        String
+  encryptionVersion      Int           @default(1)
+  slippageBps            Int           @default(5)
+  notes                  String?       @db.Text
+  createdAt              DateTime      @default(now())
+  updatedAt              DateTime      @updatedAt
+  trades                 Trade[]
+  logs                   StrategyLog[]
+  dailyLimits            DailyLimit[]
+}
+
+model Trade {
+  id             String      @id @default(cuid())
+  userSettingId  String
+  userId         String
+  side           TradeSide
+  status         TradeStatus @default(OPEN)
+  leverage       Int         @default(50)
+  entryPrice     Decimal
+  exitPrice      Decimal?
+  quantity       Decimal
+  pnl            Decimal?
+  confidence     Int
+  stopLoss       Decimal
+  takeProfit     Decimal
+  reason         String      @db.Text
+  metadata       Json?
+  openedAt       DateTime    @default(now())
+  closedAt       DateTime?
+  userSetting    UserSetting @relation(fields: [userSettingId], references: [id], onDelete: Cascade)
+}
+
+model StrategyLog {
+  id            String      @id @default(cuid())
+  userSettingId String
+  level         String      @default("info")
+  message       String      @db.Text
+  payload       Json?
+  createdAt     DateTime    @default(now())
+  userSetting   UserSetting @relation(fields: [userSettingId], references: [id], onDelete: Cascade)
+}
+
+model DailyLimit {
+  id            String      @id @default(cuid())
+  userSettingId String
+  date          DateTime
+  loss          Decimal     @default(Decimal("0"))
+  userSetting   UserSetting @relation(fields: [userSettingId], references: [id], onDelete: Cascade)
+
+  @@unique([userSettingId, date])
+}
