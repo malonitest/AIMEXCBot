@@ -1,0 +1,39 @@
+{
+  "name": "aimexcbot",
+  "version": "1.0.0",
+  "description": "AI-driven MEXC SOL/USDT futures trading bot with 50x leverage",
+  "main": "index.js",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@heroicons/react": "^2.2.0",
+    "@types/node": "^25.0.0",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "autoprefixer": "^10.4.22",
+    "axios": "^1.13.2",
+    "bcryptjs": "^3.0.3",
+    "crypto-js": "^4.2.0",
+    "next": "^16.0.8",
+    "pg": "^8.16.3",
+    "postcss": "^8.5.6",
+    "react": "^19.2.1",
+    "react-dom": "^19.2.1",
+    "tailwindcss": "^3.4.19",
+    "typescript": "^5.9.3"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/crypto-js": "^4.2.2",
+    "@types/pg": "^8.16.0",
+    "eslint": "^9.39.1",
+    "eslint-config-next": "^16.0.8"
+  }
+}
